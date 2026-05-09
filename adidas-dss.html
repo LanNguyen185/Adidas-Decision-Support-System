@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adidas DSS – Hệ hỗ trợ ra quyết định</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f2ee;
+    --card: #ffffff;
+    --border: #e2ddd6;
+    --text: #1c1a17;
+    --muted: #7a7368;
+    --subtle: #a8a199;
+    --accent: #c94a1a;
+    --accent-lt: #fdf0eb;
+    --accent-border: #f5bda8;
+    --green: #1a6b4a;
+    --green-lt: #eaf5ef;
+    --blue: #1a3fa3;
+    --blue-lt: #edf1fb;
+    --amber: #b06a0a;
+    --amber-lt: #fdf4e7;
+    --sidebar: #1a1815;
+    --sidebar-hover: #2a2723;
+    --chat-bg: #f0ede8;
+    --shadow: 0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.04);
+    --font-num: 'Space Grotesk', sans-serif;
+    --font: 'DM Sans', sans-serif;
+  }
+
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 13.5px; line-height: 1.55; }
+
+  /* ═══ LAYOUT ═══ */
+  .app { display: flex; height: 100vh; }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar {
+    width: 60px; background: var(--sidebar); display: flex; flex-direction: column;
+    align-items: center; padding: 14px 0 20px; gap: 6px; flex-shrink: 0; z-index: 20;
+  }
+  .sb-brand {
+    width: 38px; height: 38px; background: var(--accent); border-radius: 11px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+  }
+  .sb-brand svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .sb-btn {
+    width: 40px; height: 40px; border-radius: 10px; border: none; background: transparent;
+    color: #6b6560; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .18s; position: relative;
+  }
+  .sb-btn:hover { background: var(--sidebar-hover); color: #e8e4df; }
+  .sb-btn.active { background: var(--sidebar-hover); color: var(--accent); }
+  .sb-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .sb-sep { width: 28px; height: 1px; background: #2e2b28; margin: 4px 0; }
+  .sb-badge {
+    position: absolute; top: 5px; right: 5px; width: 7px; height: 7px;
+    border-radius: 50%; background: #22c55e; border: 1.5px solid var(--sidebar);
+  }
+
+  /* ═══ MAIN ═══ */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+  /* ═══ TOPBAR ═══ */
+  .topbar {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 0 22px; height: 54px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0; gap: 12px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar-logo { font-family: var(--font-num); font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+  .topbar-logo span { color: var(--accent); }
+  .topbar-sep { width: 1px; height: 22px; background: var(--border); }
+  .topbar-sub { font-size: 12px; color: var(--muted); }
+  .topbar-pills { display: flex; gap: 5px; }
+  .pill {
+    font-size: 12px; font-weight: 500; padding: 5px 13px; border-radius: 20px;
+    border: 1px solid var(--border); background: transparent; cursor: pointer;
+    color: var(--muted); transition: all .18s; font-family: var(--font);
+  }
+  .pill:hover { background: var(--bg); color: var(--text); }
+  .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ═══ CONTENT ═══ */
+  .content { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ═══ METRIC CARDS ═══ */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .metric {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 15px 18px; box-shadow: var(--shadow);
+  }
+  .metric-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 7px; }
+  .metric-val { font-family: var(--font-num); font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -.5px; line-height: 1; }
+  .metric-sub { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+  .metric-tag {
+    display: inline-flex; align-items: center; gap: 2px;
+    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 2px;
+  }
+  .tag-up { background: var(--green-lt); color: var(--green); }
+  .tag-down { background: var(--accent-lt); color: var(--accent); }
+  .tag-info { background: var(--blue-lt); color: var(--blue); }
+
+  /* ═══ CHART GRIDS ═══ */
+  .row-2 { display: grid; grid-template-columns: 2fr 1.1fr; gap: 12px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .row-2b { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .chart-card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .chart-card-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 12px; }
+  .chart-wrap { position: relative; }
+
+  /* Correlation bars */
+  .corr-item { margin-bottom: 12px; }
+  .corr-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .corr-name { font-size: 12px; color: var(--text); font-weight: 500; }
+  .corr-val { font-size: 12px; font-weight: 700; }
+  .corr-track { height: 7px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+  .corr-fill { height: 100%; border-radius: 4px; }
+  .corr-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+  /* Insight panel */
+  .insight-box {
+    background: var(--sidebar); border-radius: 12px; padding: 14px 16px; color: #e8e4df;
+  }
+  .insight-title { font-size: 11.5px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .insight-text { font-size: 12px; line-height: 1.65; color: #c8c2ba; }
+  .insight-text strong { color: #f0ece8; font-weight: 500; }
+
+  /* Year compare */
+  .year-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .year-box { border-radius: 10px; padding: 13px 15px; }
+  .year-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .year-val { font-family: var(--font-num); font-size: 22px; font-weight: 700; line-height: 1; margin-bottom: 3px; }
+  .year-units { font-size: 11px; color: var(--muted); }
+  .growth-bar { background: var(--green-lt); border: 1px solid #b8e0cb; border-radius: 8px; padding: 9px 12px; font-size: 12px; color: var(--green); font-weight: 500; margin-bottom: 8px; }
+  .rec-bar { background: var(--blue-lt); border: 1px solid #c0d0f5; border-radius: 8px; padding: 9px 12px; font-size: 11.5px; color: var(--blue); }
+
+  /* Scenario section */
+  .scenario-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 10px; }
+  .sc-card { border-radius: 10px; padding: 12px 14px; border: 1.5px solid transparent; transition: all .2s; cursor: default; }
+  .sc-card.best { border-color: var(--green); background: var(--green-lt); }
+  .sc-card.mid { border-color: var(--accent-border); background: var(--accent-lt); }
+  .sc-card.low { border-color: var(--border); background: var(--bg); }
+  .sc-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+  .sc-val { font-family: var(--font-num); font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .sc-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .sc-card.best .sc-label { color: var(--green); }
+  .sc-card.best .sc-val { color: var(--green); }
+  .sc-card.mid .sc-label { color: var(--accent); }
+  .sc-card.mid .sc-val { color: var(--accent); }
+
+  /* Optimizer section */
+  .opt-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-top: 10px; }
+  .opt-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .opt-region { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+  .opt-units { font-family: var(--font-num); font-size: 15px; font-weight: 700; color: var(--text); }
+  .opt-pct { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .opt-south { background: var(--accent-lt); border-color: var(--accent-border); }
+  .opt-south .opt-region { color: var(--accent); }
+  .opt-south .opt-units { color: var(--accent); }
+
+  /* ═══ CHAT PANEL ═══ */
+  .chat-panel {
+    width: 340px; background: var(--card); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .chat-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .chat-title { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+  .chat-desc { font-size: 11.5px; color: var(--muted); }
+  .chip-row { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
+  .chip {
+    font-size: 11px; padding: 4px 9px; border: 1px solid var(--border); border-radius: 20px;
+    cursor: pointer; color: var(--muted); background: transparent; transition: all .15s;
+    font-family: var(--font); white-space: nowrap;
+  }
+  .chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chat-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 9px; background: var(--chat-bg); min-height: 0; }
+  .chat-msg { max-width: 90%; padding: 9px 12px; border-radius: 13px; font-size: 12.5px; line-height: 1.6; word-break: break-word; }
+  .chat-msg.bot { background: var(--card); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .chat-msg.user { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .chat-msg.thinking { background: var(--card); border: 1px solid var(--border); align-self: flex-start; color: var(--muted); font-style: italic; display: flex; align-items: center; gap: 8px; }
+  .dots { display: flex; gap: 3px; }
+  .dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); animation: dotBounce 1.2s infinite ease-in-out both; }
+  .dots span:nth-child(1) { animation-delay: -.24s; }
+  .dots span:nth-child(2) { animation-delay: -.12s; }
+  @keyframes dotBounce { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+  .chat-footer { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; background: var(--card); flex-shrink: 0; }
+  .chat-input {
+    flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px;
+    font-size: 12.5px; font-family: var(--font); outline: none; background: var(--chat-bg);
+    color: var(--text); resize: none; line-height: 1.4; transition: border-color .15s;
+  }
+  .chat-input:focus { border-color: #aaa; }
+  .chat-send {
+    width: 36px; height: 36px; border-radius: 9px; border: none; background: var(--accent);
+    color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .15s;
+  }
+  .chat-send:disabled { opacity: .45; cursor: default; }
+  .chat-send svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ═══ PAGE SECTIONS ═══ */
+  .page { display: none; }
+  .page.active { display: contents; }
+
+  /* ═══ SCROLLBAR ═══ */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ═══ LEGEND ═══ */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; font-size: 11.5px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ═══ SECTION HEADER ═══ */
+  .section-hd { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .section-hd::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ═══ TABLE ═══ */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .data-table td { padding: 7px 10px; border-bottom: 1px solid var(--bg); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--bg); }
+  .td-num { font-family: var(--font-num); font-weight: 600; }
+  .td-bar-wrap { display: flex; align-items: center; gap: 7px; }
+  .td-bar-track { flex: 1; height: 5px; background: var(--bg); border-radius: 3px; }
+  .td-bar-fill { height: 100%; border-radius: 3px; }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <button class="sb-btn active" id="nav-dash" onclick="switchPage('dash',this)" title="Dashboard tổng quan">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="sb-btn" id="nav-product" onclick="switchPage('product',this)" title="Phân tích sản phẩm">
+      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    </button>
+    <button class="sb-btn" id="nav-region" onclick="switchPage('region',this)" title="Khu vực & kênh bán">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+    </button>
+    <div class="sb-sep"></div>
+    <button class="sb-btn" id="nav-scenario" onclick="switchPage('scenario',this)" title="Phân tích kịch bản">
+      <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    </button>
+    <button class="sb-btn" id="nav-optimize" onclick="switchPage('optimize',this)" title="Tối ưu hóa Solver">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    </button>
+    <div class="sb-sep"></div>
+    <button class="sb-btn" id="nav-chat" onclick="switchPage('chat',this)" title="Chatbot AI" style="margin-top:auto">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span class="sb-badge"></span>
+    </button>
+  </nav>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-logo">Adidas <span>DSS</span></div>
+        <div class="topbar-sep"></div>
+        <div class="topbar-sub" id="topbar-sub">Dashboard tổng quan · 7,958 giao dịch · 2020–2021</div>
+      </div>
+      <div class="topbar-pills" id="topbar-pills">
+        <button class="pill active" onclick="filterYear('all',this)">Tất cả</button>
+        <button class="pill" onclick="filterYear('2020',this)">2020</button>
+        <button class="pill" onclick="filterYear('2021',this)">2021</button>
+      </div>
+    </header>
+
+    <!-- CONTENT SCROLL -->
+    <div class="content" id="mainContent">
+
+      <!-- ════ PAGE: DASHBOARD ════ -->
+      <div class="page active" id="page-dash">
+
+        <!-- METRICS -->
+        <div class="metrics" id="metricRow">
+          <div class="metric">
+            <div class="metric-label">Tổng doanh thu</div>
+            <div class="metric-val" id="m-rev">$886M <span class="metric-tag tag-up">+300% YoY</span></div>
+            <div class="metric-sub">Năm 2021 tăng mạnh: $709M</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Lợi nhuận ròng</div>
+            <div class="metric-val" id="m-profit">$326M</div>
+            <div class="metric-sub">Biên lợi nhuận TB: 41.3%</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Sản lượng bán được</div>
+            <div class="metric-val" id="m-units">2.21M</div>
+            <div class="metric-sub">Tháng cao nhất: T7/2021 · 166K SP</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Nhà bán lẻ #1</div>
+            <div class="metric-val" style="font-size:17px">West Gear</div>
+            <div class="metric-sub">$238M · 26.9% thị phần</div>
+          </div>
+        </div>
+
+        <!-- ROW: Monthly + Correlation -->
+        <div class="row-2">
+          <div class="chart-card">
+            <div class="chart-card-title">Doanh thu & Lợi nhuận theo tháng</div>
+            <div class="chart-card-sub">Xu hướng tăng trưởng rõ rệt từ đầu 2021</div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-swatch" style="background:#c94a1a"></div>Doanh thu</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#1a6b4a"></div>Lợi nhuận</div>
+            </div>
+            <div class="chart-wrap" style="height:200px"><canvas id="cMonthly" role="img" aria-label="Doanh thu và lợi nhuận theo tháng 2020-2021">Doanh thu từ $7.9M đến $77.5M.</canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Phân tích ảnh hưởng đến Doanh thu</div>
+            <div class="chart-card-sub">Hồi quy đa biến theo tháng · R² = 99,67% · Biến phụ thuộc: Doanh thu</div>
+            <div class="corr-item">
+              <div class="corr-head"><span class="corr-name">Giá bán / sản phẩm</span><span class="corr-val" style="color:var(--accent)">t-Stat = 33,8 ★</span></div>
+              <div class="corr-track"><div class="corr-fill" style="width:100%;background:var(--accent)"></div></div>
+              <div class="corr-note">Ảnh hưởng mạnh hơn · tăng 50% giá → doanh thu tăng ~$29,8M</div>
+            </div>
+            <div class="corr-item">
+              <div class="corr-head"><span class="corr-name">Sản lượng bán (Units Sold)</span><span class="corr-val" style="color:var(--blue)">t-Stat = 20,77</span></div>
+              <div class="corr-track"><div class="corr-fill" style="width:61.5%;background:var(--blue)"></div></div>
+              <div class="corr-note">Ảnh hưởng thứ hai · tăng 50% sản lượng → doanh thu tăng ~$23,1M</div>
+            </div>
+            <div class="corr-item">
+              <div class="corr-head"><span class="corr-name">Hệ số xác định mô hình</span><span class="corr-val" style="color:var(--green)">R² = 99,67%</span></div>
+              <div class="corr-track"><div class="corr-fill" style="width:99.67%;background:var(--green)"></div></div>
+              <div class="corr-note">Mô hình rất đáng tin cậy · phương trình: DT = −56,910,312 + 148,799×Giá + 385×SL</div>
+            </div>
+            <div class="corr-item">
+              <div class="corr-head"><span class="corr-name">Kết luận chiến lược</span><span class="corr-val" style="color:var(--amber)">KB2 tối ưu</span></div>
+              <div class="corr-track"><div class="corr-fill" style="width:75%;background:var(--amber)"></div></div>
+              <div class="corr-note">Duy trì giá ổn định + tăng sản lượng 15% → $88,43M (cao nhất trong 3 kịch bản)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW: Retailer + Year compare -->
+        <div class="row-2b">
+          <div class="chart-card">
+            <div class="chart-card-title">So sánh nhà bán lẻ</div>
+            <div class="chart-card-sub">Doanh thu & Lợi nhuận theo retailer</div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-swatch" style="background:#1a3fa3"></div>Doanh thu</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#1a6b4a"></div>Lợi nhuận</div>
+            </div>
+            <div class="chart-wrap" style="height:190px"><canvas id="cRetailer" role="img" aria-label="So sánh nhà bán lẻ">West Gear dẫn đầu $238M.</canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Tăng trưởng theo năm</div>
+            <div class="chart-card-sub">2020 → 2021 · bùng nổ 4×</div>
+            <div class="year-grid">
+              <div class="year-box" style="background:var(--bg);border:1px solid var(--border)">
+                <div class="year-label">2020</div>
+                <div class="year-val" style="color:var(--text)">$177M</div>
+                <div class="year-units">407K sản phẩm</div>
+              </div>
+              <div class="year-box" style="background:var(--accent-lt);border:1px solid var(--accent-border)">
+                <div class="year-label">2021</div>
+                <div class="year-val" style="color:var(--accent)">$709M</div>
+                <div class="year-units">1.81M sản phẩm</div>
+              </div>
+            </div>
+            <div class="growth-bar">↑ +299.5% doanh thu · +343.5% sản lượng · Biên lợi nhuận TB ổn định 41.4%</div>
+            <div class="rec-bar">Gợi ý: Duy trì đà 2021 bằng mở rộng Online (809K đơn vị – nhiều nhất, biên 38.7%) và đẩy mạnh Men's Street Footwear ($206M)</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════ PAGE: PRODUCT ════ -->
+      <div class="page" id="page-product">
+        <div class="section-hd">Phân tích sản phẩm</div>
+        <div class="row-2">
+          <div class="chart-card">
+            <div class="chart-card-title">Doanh thu theo danh mục sản phẩm</div>
+            <div class="chart-card-sub">6 nhóm sản phẩm – so sánh doanh thu và sản lượng</div>
+            <div class="chart-wrap" style="height:240px"><canvas id="cProductBar" role="img" aria-label="Doanh thu sản phẩm">Men's Street Footwear $206M.</canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Tỷ trọng doanh thu</div>
+            <div class="chart-card-sub">Phân bổ % theo sản phẩm</div>
+            <div class="chart-wrap" style="height:180px"><canvas id="cProductPie" role="img" aria-label="Tỷ trọng sản phẩm">Men's Street Footwear 23.2%.</canvas></div>
+            <div class="legend" style="margin-top:8px;justify-content:center">
+              <div class="legend-item"><div class="legend-swatch" style="background:#c94a1a"></div>M. Street</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#1a6b4a"></div>W. Apparel</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#1a3fa3"></div>M. Athletic</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#b06a0a"></div>W. Street</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#7a3fa3"></div>M. Apparel</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#2a8a6a"></div>W. Athletic</div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Bảng chi tiết sản phẩm</div>
+          <div class="chart-card-sub">Doanh thu, sản lượng, lợi nhuận và biên lợi nhuận theo từng danh mục</div>
+          <table class="data-table">
+            <thead><tr><th>Sản phẩm</th><th>Doanh thu</th><th>Sản lượng</th><th>Lợi nhuận</th><th>Biên LN</th><th>Thị phần DT</th></tr></thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
+        <div class="insight-box">
+          <div class="insight-title">Insight sản phẩm</div>
+          <div class="insight-text">
+            <strong>Men's Street Footwear</strong> dẫn đầu doanh thu ($205.9M, 23.2%) với sản lượng cao nhất 534K đơn vị.
+            <strong>Women's Apparel</strong> đứng thứ 2 ($176.3M) nhưng có biên lợi nhuận ổn định.
+            <strong>Women's Athletic Footwear</strong> là danh mục yếu nhất ($104.9M) – tiềm năng đầu tư marketing để tăng trưởng.
+            Chiến lược: tập trung giữ vững danh mục đầu, đẩy mạnh danh mục cuối để đa dạng hóa doanh thu.
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ PAGE: REGION ════ -->
+      <div class="page" id="page-region">
+        <div class="section-hd">Phân tích khu vực & kênh bán hàng</div>
+        <div class="row-3">
+          <div class="chart-card">
+            <div class="chart-card-title">Doanh thu theo khu vực</div>
+            <div class="chart-card-sub">5 khu vực tại thị trường Mỹ</div>
+            <div class="chart-wrap" style="height:190px"><canvas id="cRegion" role="img" aria-label="Doanh thu khu vực">West $267M.</canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Kênh bán hàng – Doanh thu</div>
+            <div class="chart-card-sub">In-store · Online · Outlet</div>
+            <div class="chart-wrap" style="height:160px"><canvas id="cMethodDoughnut" role="img" aria-label="Kênh bán hàng">In-store $354M.</canvas></div>
+            <div class="legend" style="margin-top:8px;justify-content:center">
+              <div class="legend-item"><div class="legend-swatch" style="background:#c94a1a"></div>In-store 40%</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#1a3fa3"></div>Online 27%</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#1a6b4a"></div>Outlet 33%</div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Kênh bán – Sản lượng</div>
+            <div class="chart-card-sub">Online dẫn đầu sản lượng (808K đơn vị)</div>
+            <div class="chart-wrap" style="height:160px"><canvas id="cMethodUnits" role="img" aria-label="Sản lượng kênh bán">Online 808K.</canvas></div>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="chart-card">
+            <div class="chart-card-title">So sánh kênh bán – Doanh thu vs Lợi nhuận vs Sản lượng</div>
+            <div class="chart-card-sub">Phân tích hiệu quả từng kênh phân phối</div>
+            <table class="data-table">
+              <thead><tr><th>Kênh bán</th><th>Doanh thu</th><th>Sản lượng</th><th>Lợi nhuận</th><th>Biên LN</th><th>DT/đơn vị</th></tr></thead>
+              <tbody id="methodTable"></tbody>
+            </table>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Top 5 tiểu bang doanh thu cao nhất</div>
+            <div class="chart-card-sub">New York, California, Florida dẫn đầu</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="cTopStates" role="img" aria-label="Top tiểu bang">New York $63M.</canvas></div>
+          </div>
+        </div>
+        <div class="insight-box">
+          <div class="insight-title">Insight kênh bán & khu vực</div>
+          <div class="insight-text">
+            <strong>In-store</strong> mang lại doanh thu cao nhất ($353.8M, 40%) nhưng sản lượng chỉ đứng thứ 3.
+            <strong>Online</strong> có sản lượng nhiều nhất (808K) với biên lợi nhuận cao nhất (38.7%) → kênh hiệu quả nhất về đơn vị sản phẩm, cần đầu tư mở rộng.
+            <strong>West</strong> là khu vực dẫn đầu ($267M, 30.1%) · <strong>South</strong> có chi phí thấp nhất → tiềm năng phân bổ sản lượng theo mô hình tối ưu.
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ PAGE: SCENARIO ════ -->
+      <div class="page" id="page-scenario">
+        <div class="section-hd">Phân tích kịch bản (Scenario Analysis – What-If)</div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">Doanh thu cơ sở (tháng 12/2021)</div>
+            <div class="metric-val">$76.9M</div>
+            <div class="metric-sub">Giá TB $495 · 155,362 đơn vị</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Kịch bản tốt nhất</div>
+            <div class="metric-val" style="color:var(--green)">$88.4M</div>
+            <div class="metric-sub">Kịch bản 2: giữ giá, tăng SL 15%</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Hệ số hồi quy R²</div>
+            <div class="metric-val">99.67%</div>
+            <div class="metric-sub">Mô hình Multiple Regression</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Goal Seek – Sản lượng mục tiêu</div>
+            <div class="metric-val">191,310</div>
+            <div class="metric-sub">Để đạt lợi nhuận $35M/tháng</div>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="chart-card">
+            <div class="chart-card-title">So sánh 3 kịch bản kinh doanh</div>
+            <div class="chart-card-sub">Tháng 12/2021 · Doanh thu dự báo theo kịch bản</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="cScenario" role="img" aria-label="Kịch bản so sánh">Kịch bản 2 cao nhất $88.4M.</canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Chi tiết 3 kịch bản</div>
+            <div class="chart-card-sub">Phân tích đánh đổi giá – sản lượng (trade-off)</div>
+            <div class="scenario-grid">
+              <div class="sc-card low">
+                <div class="sc-label">Kịch bản 1</div>
+                <div class="sc-val">$80.36M</div>
+                <div class="sc-desc">Giá giảm 5%<br>Sản lượng tăng 10%</div>
+              </div>
+              <div class="sc-card best">
+                <div class="sc-label">★ Kịch bản 2</div>
+                <div class="sc-val">$88.43M</div>
+                <div class="sc-desc">Giá giữ nguyên<br>Sản lượng tăng 15%</div>
+              </div>
+              <div class="sc-card mid">
+                <div class="sc-label">Kịch bản 3</div>
+                <div class="sc-val">$74.28M</div>
+                <div class="sc-desc">Giá tăng 5%<br>Sản lượng giảm 8%</div>
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <div class="insight-box" style="background:var(--sidebar)">
+                <div class="insight-title">Kết luận Scenario Analysis</div>
+                <div class="insight-text">
+                  <strong>Kịch bản 2 tối ưu nhất</strong>: giữ giá bán ổn định + tăng sản lượng 15% → $88.4M (cao nhất).
+                  Tăng giá (KB3) khiến sản lượng giảm → doanh thu không tối ưu. Điều này xác nhận <strong>yếu tố đánh đổi (trade-off)</strong> giữa giá và sản lượng.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Heat Map – Doanh thu dự báo theo Giá × Sản lượng</div>
+          <div class="chart-card-sub">Giá bán $400–$600 · Sản lượng 120K–180K đơn vị · Phương trình: DT = −56,910,312 + 148,799×Giá + 385×SL (R²=99.67%)</div>
+          <div id="heatmapContainer" style="overflow-x:auto;margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- ════ PAGE: OPTIMIZE ════ -->
+      <div class="page" id="page-optimize">
+        <div class="section-hd">Tối ưu hóa phân bổ sản lượng (Solver – Linear Programming)</div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">Tổng lợi nhuận tối ưu</div>
+            <div class="metric-val" style="color:var(--green)">$360M</div>
+            <div class="metric-sub">Kết quả Solver LP tối đa hóa LN</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Tổng sản lượng phân bổ</div>
+            <div class="metric-val">2,400,000</div>
+            <div class="metric-sub">Ràng buộc cố định tổng sản lượng</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Khu vực ưu tiên</div>
+            <div class="metric-val" style="font-size:17px">South</div>
+            <div class="metric-sub">1.41M SP · 59% tổng sản lượng</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Tổng chi phí sản xuất</div>
+            <div class="metric-val">$540M</div>
+            <div class="metric-sub">Đạt mức trần cho phép (60% DT)</div>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="chart-card">
+            <div class="chart-card-title">Phân bổ sản lượng tối ưu theo khu vực</div>
+            <div class="chart-card-sub">Solver LP · Mục tiêu: Tối đa hóa lợi nhuận · Ràng buộc: tổng 2.4M SP · mỗi khu vực ≥ 240K SP</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="cOptimize" role="img" aria-label="Phân bổ sản lượng tối ưu">South 59%.</canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Chi tiết phân bổ theo khu vực</div>
+            <div class="chart-card-sub">Khu vực South có chi phí thấp nhất ($203/SP) → được ưu tiên cao nhất</div>
+            <div class="opt-grid">
+              <div class="opt-card">
+                <div class="opt-region">Northeast</div>
+                <div class="opt-units">240K</div>
+                <div class="opt-pct">10% · Tối thiểu</div>
+              </div>
+              <div class="opt-card">
+                <div class="opt-region">West</div>
+                <div class="opt-units">240K</div>
+                <div class="opt-pct">10% · Tối thiểu</div>
+              </div>
+              <div class="opt-card">
+                <div class="opt-region">Midwest</div>
+                <div class="opt-units">240K</div>
+                <div class="opt-pct">10% · Tối thiểu</div>
+              </div>
+              <div class="opt-card">
+                <div class="opt-region">Southeast</div>
+                <div class="opt-units">268.7K</div>
+                <div class="opt-pct">11.2%</div>
+              </div>
+              <div class="opt-card opt-south">
+                <div class="opt-region">★ South</div>
+                <div class="opt-units">1,411K</div>
+                <div class="opt-pct">58.8% · Ưu tiên</div>
+              </div>
+            </div>
+            <div style="margin-top:10px">
+              <table class="data-table">
+                <thead><tr><th>Khu vực</th><th>DT đơn vị</th><th>Chi phí/SP</th><th>Biên LN/SP</th></tr></thead>
+                <tbody>
+                  <tr><td>Northeast</td><td class="td-num">$386</td><td class="td-num">$243</td><td class="td-num">$143</td></tr>
+                  <tr><td>West</td><td class="td-num">$408</td><td class="td-num">$271</td><td class="td-num">$137</td></tr>
+                  <tr><td>Midwest</td><td class="td-num">$366</td><td class="td-num">$224</td><td class="td-num">$142</td></tr>
+                  <tr><td>Southeast</td><td class="td-num">$453</td><td class="td-num">$287</td><td class="td-num">$165</td></tr>
+                  <tr style="background:var(--accent-lt)"><td><strong>South ★</strong></td><td class="td-num" style="color:var(--accent)">$354</td><td class="td-num" style="color:var(--green)">$203</td><td class="td-num" style="color:var(--green)">$149</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="insight-box">
+          <div class="insight-title">Kết luận Solver – Tối ưu hóa LP</div>
+          <div class="insight-text">
+            Mặc dù <strong>Southeast</strong> có doanh thu đơn vị cao nhất ($453/SP), chi phí cũng cao ($287/SP) → tỷ lệ chi phí/DT = 63,5% &gt; 60% → vi phạm ràng buộc khi tăng sản lượng lớn.
+            <strong>South</strong> là khu vực duy nhất có chi phí/DT = 57,2% &lt; 60% → không bị ràng buộc → Solver ưu tiên phân bổ 59% sản lượng cho South để tối đa hóa lợi nhuận.
+            Doanh nghiệp nên <strong>tập trung logistics và kênh phân phối vào khu vực South</strong>, đồng thời duy trì mức tối thiểu 240K SP ở 4 khu vực còn lại để giữ thị phần.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </div><!-- end main -->
+
+  <!-- ═══ CHAT PANEL ═══ -->
+  <aside class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <div class="chat-title"><span class="status-dot"></span>Adidas AI Analyst</div>
+      <div class="chat-desc">Chatbot DSS · Dữ liệu Adidas 2020–2021 đã nạp sẵn</div>
+    </div>
+    <div class="chip-row">
+      <button class="chip" onclick="quickAsk('Yếu tố nào ảnh hưởng mạnh nhất đến doanh thu Adidas?')">Yếu tố ảnh hưởng DT?</button>
+      <button class="chip" onclick="quickAsk('Nên làm gì để tăng doanh thu hiệu quả nhất – tăng sản lượng hay tăng giá?')">Tăng SL hay giá?</button>
+      <button class="chip" onclick="quickAsk('Kênh bán hàng nào hiệu quả nhất và cần đầu tư mở rộng?')">Kênh bán tốt nhất?</button>
+      <button class="chip" onclick="quickAsk('Kịch bản nào tối ưu nhất để tăng doanh thu tháng 12/2021?')">Kịch bản tối ưu?</button>
+      <button class="chip" onclick="quickAsk('Sản phẩm nào tiềm năng nhất để đầu tư tăng trưởng?')">SP tiềm năng?</button>
+      <button class="chip" onclick="quickAsk('Khu vực nào nên ưu tiên phân bổ sản lượng theo mô hình Solver?')">Solver LP khu vực?</button>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="chat-msg bot">
+        Xin chào! Tôi là <strong>Adidas AI Analyst</strong> – trợ lý DSS hỗ trợ ra quyết định kinh doanh.<br><br>
+        Hỏi tôi về doanh thu, sản lượng, giá bán, khu vực, kênh phân phối, hoặc chiến lược kinh doanh – tôi sẽ trả lời dựa trên dữ liệu thực tế.
+      </div>
+    </div>
+    <div class="chat-footer">
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Hỏi về dữ liệu Adidas..." onkeydown="handleChatKey(event)"></textarea>
+      <button class="chat-send" id="sendBtn" onclick="sendChat()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </aside>
+
+</div><!-- end app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const RAW = {
+  monthly:[
+    {m:"2020-01",rev:15971465,units:40816,profit:5719725},
+    {m:"2020-02",rev:14811557,units:33312,profit:5134331},
+    {m:"2020-03",rev:17428120,units:41365,profit:5771719},
+    {m:"2020-04",rev:21542959,units:43930,profit:8121048},
+    {m:"2020-05",rev:16814374,units:33455,profit:5829803},
+    {m:"2020-06",rev:8829819,units:16269,profit:2292727},
+    {m:"2020-07",rev:17054738,units:34801,profit:4880303},
+    {m:"2020-08",rev:19637162,units:54140,profit:7234341},
+    {m:"2020-09",rev:18163714,units:42104,profit:7058251},
+    {m:"2020-10",rev:10721555,units:26908,profit:4088802},
+    {m:"2020-11",rev:8498109,units:21691,profit:2739047},
+    {m:"2020-12",rev:7920960,units:18324,profit:2675602},
+    {m:"2021-01",rev:54501014,units:160392,profit:19013688},
+    {m:"2021-02",rev:45577912,units:141305,profit:15966830},
+    {m:"2021-03",rev:38678779,units:128600,profit:14360429},
+    {m:"2021-04",rev:47008874,units:140459,profit:17920531},
+    {m:"2021-05",rev:62697396,units:157094,profit:23658309},
+    {m:"2021-06",rev:65277605,units:152325,profit:24101998},
+    {m:"2021-07",rev:77539742,units:166447,profit:28734256},
+    {m:"2021-08",rev:71399511,units:174668,profit:26670447},
+    {m:"2021-09",rev:58446806,units:158389,profit:23430102},
+    {m:"2021-10",rev:52251183,units:134975,profit:20540453},
+    {m:"2021-11",rev:58458885,units:135573,profit:21605180},
+    {m:"2021-12",rev:76897220,units:155362,profit:28423295}
+  ],
+  products:[
+    {name:"Men's Street Footwear",rev:205896212,units:534245,profit:81381770},
+    {name:"Women's Apparel",rev:176343839,units:386909,profit:67355719},
+    {name:"Men's Athletic Footwear",rev:151142314,units:387954,profit:50810540},
+    {name:"Women's Street Footwear",rev:126042121,units:349102,profit:44278882},
+    {name:"Men's Apparel",rev:121769511,units:272735,profit:43912556},
+    {name:"Women's Athletic Footwear",rev:104935462,units:281759,profit:38231750}
+  ],
+  regions:[
+    {name:"West",rev:267032291,units:621056},
+    {name:"Northeast",rev:184789188,units:469447},
+    {name:"Southeast",rev:158103080,units:352797},
+    {name:"South",rev:141358642,units:400443},
+    {name:"Midwest",rev:134846258,units:368961}
+  ],
+  methods:[
+    {name:"In-store",rev:353848750,units:685090,profit:126523100},
+    {name:"Online",rev:241753160,units:808878,profit:93566644},
+    {name:"Outlet",rev:290527549,units:718736,profit:105881472}
+  ],
+  retailers:[
+    {name:"West Gear",rev:238202072,profit:83746135},
+    {name:"Foot Locker",rev:217467167,profit:79498405},
+    {name:"Sports Direct",rev:179645739,profit:72906923},
+    {name:"Kohl's",rev:100782754,profit:36230391},
+    {name:"Amazon",rev:76652848,profit:28324968},
+    {name:"Walmart",rev:73378879,profit:25264394}
+  ],
+  topStates:[
+    {name:"New York",rev:63405319},{name:"California",rev:58814995},
+    {name:"Florida",rev:56291893},{name:"Texas",rev:45307229},
+    {name:"South Carolina",rev:28547250}
+  ]
+};
+
+const COLORS6 = ['#c94a1a','#1a6b4a','#1a3fa3','#b06a0a','#7a3fa3','#2a8a6a'];
+const fmt = v => v>=1e9?'$'+(v/1e9).toFixed(2)+'B':v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v;
+const fmtU = v => v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v;
+const pct = (v,t) => (v/t*100).toFixed(1)+'%';
+
+// ═══════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════
+let charts = {};
+function makeChart(id, config) {
+  if(charts[id]) { charts[id].destroy(); }
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  charts[id] = new Chart(ctx, config);
+}
+
+const baseOpts = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>c.dataset.label?c.dataset.label+': '+fmt(c.raw):fmt(c.raw)}}}
+};
+const scaleY = {y:{ticks:{callback:v=>fmt(v),font:{size:10}},grid:{color:'#f0ece8'}}};
+const scaleX = {x:{ticks:{font:{size:10}},grid:{display:false}}};
+
+function initAllCharts() {
+  // Monthly
+  makeChart('cMonthly',{type:'line',data:{
+    labels:RAW.monthly.map(d=>d.m),
+    datasets:[
+      {label:'Doanh thu',data:RAW.monthly.map(d=>d.rev),borderColor:'#c94a1a',backgroundColor:'rgba(201,74,26,.08)',fill:true,tension:.35,pointRadius:2,pointBackgroundColor:'#c94a1a'},
+      {label:'Lợi nhuận',data:RAW.monthly.map(d=>d.profit),borderColor:'#1a6b4a',backgroundColor:'rgba(26,107,74,.06)',fill:true,tension:.35,pointRadius:2,pointBackgroundColor:'#1a6b4a'}
+    ]
+  },options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},scales:{...scaleY,...scaleX,x:{ticks:{font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:12},grid:{display:false}}}}});
+
+  // Retailer
+  makeChart('cRetailer',{type:'bar',data:{
+    labels:RAW.retailers.map(r=>r.name),
+    datasets:[
+      {label:'Doanh thu',data:RAW.retailers.map(r=>r.rev),backgroundColor:'rgba(26,63,163,.75)',borderRadius:4,borderSkipped:false},
+      {label:'Lợi nhuận',data:RAW.retailers.map(r=>r.profit),backgroundColor:'rgba(26,107,74,.75)',borderRadius:4,borderSkipped:false}
+    ]
+  },options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},scales:{...scaleY,...scaleX}}});
+
+  // Product bar
+  makeChart('cProductBar',{type:'bar',data:{
+    labels:RAW.products.map(p=>p.name.replace("Men's","M.").replace("Women's","W.")),
+    datasets:[
+      {label:'Doanh thu',data:RAW.products.map(p=>p.rev),backgroundColor:COLORS6,borderRadius:5}
+    ]
+  },options:{...baseOpts,indexAxis:'y',scales:{x:{ticks:{callback:v=>fmt(v),font:{size:10}},grid:{color:'#f0ece8'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  // Product pie
+  const totalRev = RAW.products.reduce((s,p)=>s+p.rev,0);
+  makeChart('cProductPie',{type:'doughnut',data:{
+    labels:RAW.products.map(p=>p.name),
+    datasets:[{data:RAW.products.map(p=>p.rev),backgroundColor:COLORS6,borderWidth:2,borderColor:'#fff'}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+pct(c.raw,totalRev)}}}}});
+
+  // Region
+  makeChart('cRegion',{type:'bar',data:{
+    labels:RAW.regions.map(r=>r.name),
+    datasets:[{data:RAW.regions.map(r=>r.rev),backgroundColor:['#1a3fa3','#c94a1a','#1a6b4a','#b06a0a','#7a3fa3'],borderRadius:5}]
+  },options:{...baseOpts,scales:{...scaleY,...scaleX}}});
+
+  // Method doughnut
+  makeChart('cMethodDoughnut',{type:'doughnut',data:{
+    labels:RAW.methods.map(m=>m.name),
+    datasets:[{data:RAW.methods.map(m=>m.rev),backgroundColor:['#c94a1a','#1a3fa3','#1a6b4a'],borderWidth:2,borderColor:'#fff'}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw)}}}}});
+
+  // Method units bar
+  makeChart('cMethodUnits',{type:'bar',data:{
+    labels:RAW.methods.map(m=>m.name),
+    datasets:[{label:'Sản lượng',data:RAW.methods.map(m=>m.units),backgroundColor:['#f5bda8','#c0d0f5','#b8e0cb'],borderRadius:5,borderWidth:2,borderColor:['#c94a1a','#1a3fa3','#1a6b4a']}]
+  },options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtU(c.raw)+' đơn vị'}}},scales:{x:{ticks:{font:{size:11}},grid:{display:false}},y:{ticks:{callback:v=>fmtU(v),font:{size:10}},grid:{color:'#f0ece8'}}}}});
+
+  // Top states
+  makeChart('cTopStates',{type:'bar',data:{
+    labels:RAW.topStates.map(s=>s.name),
+    datasets:[{data:RAW.topStates.map(s=>s.rev),backgroundColor:['#c94a1a','#d97a55','#e8a080','#f0bca8','#f8d8cc'],borderRadius:5}]
+  },options:{...baseOpts,indexAxis:'y',scales:{x:{ticks:{callback:v=>fmt(v),font:{size:9}},grid:{color:'#f0ece8'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  // Scenario
+  const scData=[80357595,88431803,74282715];
+  makeChart('cScenario',{type:'bar',data:{
+    labels:['Kịch bản 1\nGiá -5%, SL +10%','Kịch bản 2 ★\nGiá giữ, SL +15%','Kịch bản 3\nGiá +5%, SL -8%'],
+    datasets:[{data:scData,backgroundColor:['rgba(201,74,26,.6)','rgba(26,107,74,.8)','rgba(201,74,26,.4)'],borderColor:['#c94a1a','#1a6b4a','#c94a1a'],borderWidth:2,borderRadius:6}]
+  },options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{...scaleY,x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  // Optimize
+  const optLabels=['Northeast','West','Midwest','Southeast','South'];
+  const optData=[240000,240000,240000,268675,1411325];
+  makeChart('cOptimize',{type:'doughnut',data:{
+    labels:optLabels,
+    datasets:[{data:optData,backgroundColor:['#c0d0f5','#1a3fa3','#b06a0a','#7a3fa3','#c94a1a'],borderWidth:2,borderColor:'#fff'}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.label+': '+fmtU(c.raw)+' ('+pct(c.raw,2400000)+')'}}}}});
+}
+
+// ═══════════════════════════════════════════════════
+// TABLES
+// ═══════════════════════════════════════════════════
+function buildTables() {
+  const totalRev = RAW.products.reduce((s,p)=>s+p.rev,0);
+  const maxRev = Math.max(...RAW.products.map(p=>p.rev));
+  const pt = document.getElementById('productTable');
+  if(pt) {
+    pt.innerHTML = RAW.products.map(p=>{
+      const margin = (p.profit/p.rev*100).toFixed(1);
+      const barW = (p.rev/maxRev*100).toFixed(0);
+      return `<tr>
+        <td>${p.name}</td>
+        <td><div class="td-bar-wrap"><div class="td-bar-track"><div class="td-bar-fill" style="width:${barW}%;background:#c94a1a"></div></div><span class="td-num">${fmt(p.rev)}</span></div></td>
+        <td class="td-num">${fmtU(p.units)}</td>
+        <td class="td-num">${fmt(p.profit)}</td>
+        <td class="td-num">${margin}%</td>
+        <td class="td-num">${pct(p.rev,totalRev)}</td>
+      </tr>`;
+    }).join('');
+  }
+  const mt = document.getElementById('methodTable');
+  if(mt) {
+    mt.innerHTML = RAW.methods.map(m=>{
+      const margin = (m.profit/m.rev*100).toFixed(1);
+      const revPerUnit = (m.rev/m.units).toFixed(0);
+      return `<tr>
+        <td><strong>${m.name}</strong></td>
+        <td class="td-num">${fmt(m.rev)}</td>
+        <td class="td-num">${fmtU(m.units)}</td>
+        <td class="td-num">${fmt(m.profit)}</td>
+        <td class="td-num">${margin}%</td>
+        <td class="td-num">$${revPerUnit}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// HEAT MAP
+// ═══════════════════════════════════════════════════
+function buildHeatmap() {
+  const container = document.getElementById('heatmapContainer');
+  if(!container) return;
+  const prices = [400,425,450,475,500,525,550,575,600];
+  const units = [120000,130000,140000,150000,160000,170000,180000];
+  // Regression từ Excel: Rev = -56,910,311.61 + 148,799.31*Price + 384.88*Units (R²=99.67%)
+  const vals = prices.map(p=>units.map(u=>Math.max(0, -56910311.61 + 148799.31*p + 384.88*u)));
+  const allVals = vals.flat();
+  const minV = Math.min(...allVals), maxV = Math.max(...allVals);
+  const getColor = v => {
+    const t = (v-minV)/(maxV-minV);
+    if(t<0.33) { const r=255,g=Math.round(200+55*t*3),b=Math.round(200-200*t*3); return `rgb(${r},${g},${b})`; }
+    else if(t<0.66) { const tt=(t-0.33)/0.33; const r=Math.round(255-55*tt),g=Math.round(255-30*tt),b=Math.round(0+100*tt); return `rgb(${r},${g},${b})`; }
+    else { const tt=(t-0.66)/0.34; const r=Math.round(200-120*tt),g=Math.round(225-80*tt),b=Math.round(100+80*tt); return `rgb(${r},${g},${b})`; }
+  };
+  let html = '<table style="border-collapse:collapse;font-size:11px;min-width:500px">';
+  html += '<tr><th style="padding:5px 8px;background:#f4f2ee;font-size:10px;color:#7a7368;font-weight:600;text-align:right;border:1px solid #e2ddd6">Giá ↓ / SL →</th>';
+  units.forEach(u=>{ html+=`<th style="padding:5px 8px;background:#f4f2ee;font-size:10px;color:#7a7368;font-weight:600;text-align:center;border:1px solid #e2ddd6">${(u/1000).toFixed(0)}K</th>`; });
+  html += '</tr>';
+  prices.forEach((p,pi)=>{
+    html += `<tr><td style="padding:5px 9px;background:#f4f2ee;font-size:10.5px;font-weight:600;color:#1c1a17;border:1px solid #e2ddd6;text-align:right">$${p}</td>`;
+    units.forEach((u,ui)=>{
+      const v=vals[pi][ui];
+      const bg=getColor(v);
+      const textColor = (v-minV)/(maxV-minV) > 0.5 ? '#1c1a17' : '#1c1a17';
+      html+=`<td style="padding:5px 8px;background:${bg};text-align:center;border:1px solid rgba(0,0,0,.05);font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:500;color:${textColor}">${fmt(v)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+  html += '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;font-size:11px;color:#7a7368">';
+  html += '<div style="width:100px;height:8px;border-radius:4px;background:linear-gradient(90deg,#ffc8c8,#ffd700,#3a7cbf)"></div>';
+  html += '<span>Thấp → Cao</span></div>';
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
+const PAGE_INFO = {
+  dash: { sub: 'Dashboard tổng quan · 7,958 giao dịch · 2020–2021', pills: true },
+  product: { sub: 'Phân tích 6 danh mục sản phẩm · Doanh thu & lợi nhuận', pills: false },
+  region: { sub: 'Phân tích khu vực địa lý & kênh bán hàng', pills: false },
+  scenario: { sub: 'What-If Analysis · Hồi quy R²=99.67% · Goal Seek · Kịch bản', pills: false },
+  optimize: { sub: 'Solver Linear Programming · Tối ưu phân bổ sản lượng 2.4M SP', pills: false },
+  chat: { sub: 'Chatbot AI – Trợ lý DSS', pills: false }
+};
+
+function switchPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
+  const pageEl = document.getElementById('page-'+id);
+  if(pageEl) pageEl.classList.add('active');
+  btn.classList.add('active');
+  const info = PAGE_INFO[id]||{sub:'',pills:false};
+  document.getElementById('topbar-sub').textContent = info.sub;
+  document.getElementById('topbar-pills').style.display = info.pills ? 'flex' : 'none';
+  // Lazy build scenario/optimize once
+  if(id==='scenario') buildHeatmap();
+  if(id==='chat') {
+    const chatPanel = document.getElementById('chatPanel');
+    chatPanel.style.display='flex';
+  }
+  setTimeout(()=>{ Object.values(charts).forEach(c=>c&&c.resize()); },50);
+}
+
+function filterYear(year, btn) {
+  document.querySelectorAll('.topbar-pills .pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const data = year==='all' ? RAW.monthly : RAW.monthly.filter(d=>d.m.startsWith(year));
+  if(charts['cMonthly']) {
+    charts['cMonthly'].data.labels = data.map(d=>d.m);
+    charts['cMonthly'].data.datasets[0].data = data.map(d=>d.rev);
+    charts['cMonthly'].data.datasets[1].data = data.map(d=>d.profit);
+    charts['cMonthly'].update();
+  }
+  // Update metrics
+  const totRev = data.reduce((s,d)=>s+d.rev,0);
+  const totProfit = data.reduce((s,d)=>s+d.profit,0);
+  const totUnits = data.reduce((s,d)=>s+d.units,0);
+  document.getElementById('m-rev').innerHTML = fmt(totRev) + (year==='all'?' <span class="metric-tag tag-up">+300% YoY</span>':year==='2021'?' <span class="metric-tag tag-up">+300% vs 2020</span>':'');
+  document.getElementById('m-profit').textContent = fmt(totProfit);
+  document.getElementById('m-units').textContent = fmtU(totUnits);
+}
+
+// ═══════════════════════════════════════════════════
+// CHATBOT
+// ═══════════════════════════════════════════════════
+const SYSTEM_PROMPT = `Bạn là chuyên gia phân tích DSS (Decision Support System) cho công ty Adidas tại thị trường Mỹ. Trả lời bằng tiếng Việt, ngắn gọn, trích dẫn số liệu cụ thể, đưa ra khuyến nghị hành động rõ ràng. Tối đa 250 từ mỗi câu trả lời. Dùng • cho danh sách.
+
+═══ DỮ LIỆU ADIDAS 2020–2021 ═══
+
+TỔNG QUAN:
+• Tổng doanh thu: $886.1M | Lợi nhuận: $326M | Sản lượng: 2,212,704 đơn vị
+• Biên lợi nhuận TB: 41.4% | Giá bán TB: ~$461/SP
+• 2020: $177.4M (407K SP) → 2021: $708.7M (1,806K SP) → +299.5% YoY
+
+TƯƠNG QUAN VỚI DOANH THU – Hồi quy đa biến cấp tháng (R²=99.67%):
+• Giá bán: t-Stat = 33,8 ← ẢNH HƯỞNG MẠNH HƠN · tăng 50% giá → +$29.8M DT
+• Sản lượng: t-Stat = 20,77 · tăng 50% SL → +$23.1M DT
+• Phương trình: DT = −56,910,312 + 148,799×Giá + 385×SL
+
+SẢN PHẨM (doanh thu giảm dần):
+1. Men's Street Footwear: $205.9M · 534K SP · LN $81.4M
+2. Women's Apparel: $176.3M · 387K SP · LN $67.4M
+3. Men's Athletic Footwear: $151.1M · 388K SP · LN $50.8M
+4. Women's Street Footwear: $126M · 349K SP · LN $44.3M
+5. Men's Apparel: $121.8M · 273K SP · LN $43.9M
+6. Women's Athletic Footwear: $104.9M · 282K SP · LN $38.2M
+
+KÊNH BÁN HÀNG:
+• In-store: $353.8M · 685K SP · LN $126.5M · biên 35.8%
+• Outlet: $290.5M · 718.7K SP · LN $105.9M · biên 36.5%
+• Online: $241.8M · 808.9K SP ← NHIỀU ĐƠN VỊ NHẤT · LN $93.6M · biên 38.7%
+
+KHU VỰC:
+• West: $267M (1) | Northeast: $184.8M (2) | Southeast: $158.1M (3)
+• South: $141.4M (4) | Midwest: $134.8M (5)
+
+NHÀ BÁN LẺ:
+• West Gear $238.2M | Foot Locker $217.5M | Sports Direct $179.6M | Kohl's $100.8M | Amazon $76.7M | Walmart $73.4M
+
+ĐỒ ÁN DSS – CÁC MÔ HÌNH:
+
+MÔ HÌNH HỒI QUY (R²=99.67%):
+• Doanh thu = f(Giá bán, Sản lượng) · t-Stat giá: 33.8 vs sản lượng: 20.77
+• Giá bán ảnh hưởng mạnh hơn: tăng 50% giá → +$29.8M DT; tăng 50% SL → +$23.1M DT
+
+PHÂN TÍCH KỊCH BẢN (tháng 12/2021, cơ sở $76.9M, giá TB $495/SP, SL 155,362 SP):
+• Kịch bản 1: Giá -5%, SL +10% → $80.36M
+• Kịch bản 2: Giá giữ, SL +15% → $88.43M ← TỐT NHẤT
+• Kịch bản 3: Giá +5%, SL -8% → $74.28M ← TỆ NHẤT
+
+GOAL SEEK:
+• Mục tiêu LN $35M/tháng → cần SL = 191,310 SP (khả thi, dưới trần 200,000)
+
+SOLVER LINEAR PROGRAMMING (Tối ưu phân bổ 2.4M SP):
+• Ràng buộc: tổng 2.4M, mỗi khu vực ≥ 240K, chi phí ≤ $540M
+• Kết quả: South 1,411K SP (59%) | Southeast 268.7K | NE/West/Midwest: 240K mỗi khu vực
+• Lợi nhuận tối đa: $360M
+• South ưu tiên vì: chi phí/SP = $203 (thấp nhất), DT/SP = $354 → biên tốt
+• Southeast DT/SP cao ($453) nhưng chi phí cao ($287) → không tối ưu
+
+ĐỀ XUẤT CHIẾN LƯỢC:
+1. Ổn định giá bán, không tăng thường xuyên
+2. Đẩy mạnh sản lượng kênh Online (biên cao nhất 38.7%, nhiều đơn vị nhất)
+3. Tập trung sản lượng vào khu vực South (chi phí thấp)
+4. Đầu tư vào Men's Street Footwear và Women's Apparel
+5. Cập nhật DSS theo thời gian thực`;
+
+// ==============================
+// 💬 CHAT FUNCTIONS (FIX LỖI)
+// ==============================
+
+function addUserMsg(text) {
+  const chatBody = document.getElementById("chatBody");
+  const msg = document.createElement("div");
+  msg.className = "chat-msg user";
+  msg.innerHTML = text.replace(/\n/g, "<br>");
+  chatBody.appendChild(msg);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function addBotMsg(text) {
+  const chatBody = document.getElementById("chatBody");
+  const msg = document.createElement("div");
+  msg.className = "chat-msg bot";
+  msg.innerHTML = text.replace(/\n/g, "<br>");
+  chatBody.appendChild(msg);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function addThinking() {
+  const chatBody = document.getElementById("chatBody");
+  const msg = document.createElement("div");
+  msg.className = "chat-msg thinking";
+  msg.id = "thinkingMsg";
+  msg.innerHTML = `Đang phân tích... <span class="dots"><span></span><span></span><span></span></span>`;
+  chatBody.appendChild(msg);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function removeThinking() {
+  const thinking = document.getElementById("thinkingMsg");
+  if (thinking) thinking.remove();
+}
+
+// ==============================
+// 🚀 SEND CHAT
+// ==============================
+async function sendChat() {
+  const input = document.getElementById("chatInput");
+  const btn = document.getElementById("sendBtn");
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  btn.disabled = true;
+
+  addUserMsg(text);
+  input.value = "";
+
+  addThinking();
+
+  try {
+    const res = await fetch("http://127.0.0.1:5000/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: text })
+    });
+
+    const data = await res.json();
+
+    removeThinking();
+    addBotMsg(data.reply);
+
+  } catch (err) {
+    removeThinking();
+    addBotMsg("⚠️ Không kết nối được server!");
+  }
+
+  btn.disabled = false;
+}
+
+// ==============================
+// ⚡ QUICK ASK (CHIP)
+// ==============================
+function quickAsk(text) {
+  document.getElementById("chatInput").value = text;
+  sendChat();
+}
+
+// ==============================
+// ⌨️ ENTER TO SEND
+// ==============================
+function handleChatKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+}
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  initAllCharts();
+  buildTables();
+});
+</script>
+</body>
+</html>
