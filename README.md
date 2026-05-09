@@ -38,8 +38,3 @@ The system supports KPI monitoring, sales analysis, and business decision-making
 
 ---
 
-## Screenshots
-
-![Dashboard](images/dashboard.png)
-
-![Chatbot](images/chatbot.png)
